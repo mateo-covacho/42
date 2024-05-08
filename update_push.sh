@@ -1,0 +1,1 @@
+create a script that checks a checksum of $HOME/.config/nvim and lf to ./config/nvim and lf and the ones that are different it deletes the local version and copies the version from .config then adds local git changes and commits and pushes 
