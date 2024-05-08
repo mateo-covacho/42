@@ -1,0 +1,29 @@
+#! /nix/store/9vafkkic27k7m4934fpawl6yip3a6k4h-bash-5.2-p21/bin/bash -e
+export NVIM_SYSTEM_RPLUGIN_MANIFEST='/nix/store/zsx6pnxxwvj24r52yki8najzmbah8q5s-neovim-0.9.5/rplugin.vim'
+export GEM_HOME='/nix/store/r336c7pl0qfijbpx8388380pg6n459qc-neovim-ruby-env/lib/ruby/gems/3.1.0'
+PATH=${PATH:+':'$PATH':'}
+if [[ $PATH != *':''/nix/store/r336c7pl0qfijbpx8388380pg6n459qc-neovim-ruby-env/bin'':'* ]]; then
+    PATH=$PATH'/nix/store/r336c7pl0qfijbpx8388380pg6n459qc-neovim-ruby-env/bin'
+fi
+PATH=${PATH#':'}
+PATH=${PATH%':'}
+export PATH
+LUA_PATH=${LUA_PATH:+';'$LUA_PATH';'}
+LUA_PATH=${LUA_PATH/';''/nix/store/y095yww1sgmg6240ay2ajc7j0v298ns2-luajit-2.1.1693350652-env/share/lua/5.1/?/init.lua'';'/';'}
+LUA_PATH='/nix/store/y095yww1sgmg6240ay2ajc7j0v298ns2-luajit-2.1.1693350652-env/share/lua/5.1/?/init.lua'$LUA_PATH
+LUA_PATH=${LUA_PATH#';'}
+LUA_PATH=${LUA_PATH%';'}
+export LUA_PATH
+LUA_PATH=${LUA_PATH:+';'$LUA_PATH';'}
+LUA_PATH=${LUA_PATH/';''/nix/store/y095yww1sgmg6240ay2ajc7j0v298ns2-luajit-2.1.1693350652-env/share/lua/5.1/?.lua'';'/';'}
+LUA_PATH='/nix/store/y095yww1sgmg6240ay2ajc7j0v298ns2-luajit-2.1.1693350652-env/share/lua/5.1/?.lua'$LUA_PATH
+LUA_PATH=${LUA_PATH#';'}
+LUA_PATH=${LUA_PATH%';'}
+export LUA_PATH
+LUA_CPATH=${LUA_CPATH:+';'$LUA_CPATH';'}
+LUA_CPATH=${LUA_CPATH/';''/nix/store/y095yww1sgmg6240ay2ajc7j0v298ns2-luajit-2.1.1693350652-env/lib/lua/5.1/?.so'';'/';'}
+LUA_CPATH='/nix/store/y095yww1sgmg6240ay2ajc7j0v298ns2-luajit-2.1.1693350652-env/lib/lua/5.1/?.so'$LUA_CPATH
+LUA_CPATH=${LUA_CPATH#';'}
+LUA_CPATH=${LUA_CPATH%';'}
+export LUA_CPATH
+exec -a "$0" "/nix/store/62nlxbqim2rgahbid2g7q5aryvzayycm-neovim-unwrapped-0.9.5/bin/nvim"  --cmd "lua vim.g.loaded_node_provider=0;vim.g.loaded_perl_provider=0;vim.g.loaded_python_provider=0;vim.g.python3_host_prog='/nix/store/zsx6pnxxwvj24r52yki8najzmbah8q5s-neovim-0.9.5/bin/nvim-python3';vim.g.ruby_host_prog='/nix/store/zsx6pnxxwvj24r52yki8najzmbah8q5s-neovim-0.9.5/bin/nvim-ruby'" "$@" 
