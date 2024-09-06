@@ -1,0 +1,3 @@
+[submodule "exercises/libft"]
+	path = exercises/libft
+	url = git@github.com:mateo-covacho/libft.git
