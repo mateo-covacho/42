@@ -1,3 +1,6 @@
 [submodule "exercises/libft"]
 	path = exercises/libft
 	url = git@github.com:mateo-covacho/libft.git
+[submodule "exercises/ft_printf"]
+	path = exercises/ft_printf
+	url = git@github.com:mateo-covacho/ft_printf.git
