@@ -1,0 +1,87 @@
+#Zshrc 2 Electric bogaloo
+
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="robbyrussell"
+plugins=(git)
+source $ZSH/oh-my-zsh.sh
+
+
+bindkey "^[[1;5C" forward-word
+bindkey "^[[1;5D" backward-word
+
+export ZSH="$HOME/.oh-my-zsh"
+export EDITOR="nvim"
+export RUST_BACKTRACE=1
+export PATH="/home/mateo/workspace/1.repos/nvim-linux64/bin:$PATH"
+
+bindkey "^[[1;5C" forward-word
+bindkey "^[[1;5D" backward-word
+
+PROMPT="[%F{#1abc9c}$(whoami)%f@%F{blue}$(hostname)%f:%F{#906798}%~%f]$ "
+
+
+alias vim="nvim"
+alias VPS="ssh npc@66.78.40.193"
+alias VPSP="ssh -L 3000:localhost:3000 npc@66.78.40.193"
+#alias VPSD="ssh -L 5901:localhost:5901 -N -f -l root  194.163.168.161"
+
+alias exdir="~/workspace/42/util/ExDirs.sh"
+alias wk="cd ~/workspace/"
+alias 42="cd ~/workspace/42"
+alias cr="cc -Wall -Wextra -Werror *.c"
+alias fzf="fzf --preview 'bat --color=always {}' --preview-window '~3'"
+alias fn="~/workspace/1.scripts/fzf_nvim.sh"
+alias fl="~/workspace/1.scripts/fzf_lf.sh"
+
+alias fg="~/workspace/1.scripts/fzf_grep.sh"
+alias live_grep="~/workspace/1.scripts/fzf_grep.sh"
+alias lgrep="~/workspace/1.scripts/fzf_grep.sh"
+alias lg="~/workspace/1.scripts/fzf_grep.sh"
+
+# Generated for envman. Do not edit.
+[ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
+
+# PROMPT="%F{#e74c3c}$(whoami)%f@%F{#f1c40f}$(hostname)%f:%F{#1abc9c}%~%f$ "
+
+
+
+# Adress book
+
+fpath=(/home/mateo/workspace/1.repos/lf-sixel/etc $fpath)
+autoload -U compinit
+compinit
+alias mini='~/mini-moulinette/mini-moul.sh'
+alias mini='~/mini-moulinette/mini-moul.sh'
+
+alias francinette=/home/mateo/francinette/tester.sh
+alias paco=/home/mateo/francinette/tester.sh
+# alias lf=/home/mateo/.config/lf_ubezug_not_working/lfub
+alias bat="bat -P --theme "Coldark-Dark""
+alias ccc="cc -Wall -Wextra -Werror "
+alias c=/home/mateo/.config/lf_ubezug_not_working/cleaner
+alias install="/home/mateo/workspace/1.scripts/nix_install.sh"
+
+
+
+alias gD="cd ~/Documents"
+alias gd="cd ~/Downloads"
+alias gp="cd ~/Pictures"
+alias gc="cd ~/.config"
+alias gr="cd ~/repos"
+alias gV="cd ~/videos"
+alias gs="cd ~/.local/bin"
+alias gt="cd ~/.local/share/Trash/files"
+alias gw="cd ~/workspace "
+alias gm="cd ~/memes"
+alias gn="cd ~/Nextcloud/"
+alias gv="cd ~/Nextcloud/main-vault/"
+alias g4="cd ~/workspace/42/"
+
+
+plugins=(fzf-plugin)
+
+# Added by Amplify CLI binary installer
+export PATH="$HOME/.amplify/bin:$PATH"
+
+export PATH=$PATH:/home/mateo/.spicetify
+export EDITOR="nvim"
