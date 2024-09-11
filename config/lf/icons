@@ -46,9 +46,9 @@ fi             # FILE
 *.ejs           
 *.css           
 *.less          
-*.md            
-*.mdx           
-*.markdown      
+*.md             
+*.mdx           
+*.markdown      
 *.rmd           
 *.json          
 *.webmanifest   
@@ -130,8 +130,8 @@ fi             # FILE
 *.fsx           
 *.fs            
 *.fsi           
-*.rs            
-*.rlib          
+*.rs             
+*.rlib           
 *.d             
 *.erl           
 *.hrl           
