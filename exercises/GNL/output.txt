@@ -1,0 +1,2826 @@
+Project Path: /home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line
+
+Source Tree:
+
+```
+get_next_line
+├── get_next_line_utils.c
+├── text.txt
+├── get_next_line_bonus.c
+├── get_next_line.o
+├── output.txt
+├── get_next_line.a
+├── Makefile
+├── explenation.txt
+├── get_next_line_utils.o
+├── get_next_line-subject.md
+├── get_next_line_bonus.h
+├── get_next_line_utils_bonus.c
+├── get_next_line.h
+├── get_next_line.c
+├── test1.txt
+└── main.c
+
+```
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/get_next_line_utils.c`:
+
+```````c
+#include "get_next_line.h"
+
+char	*ft_strchr(const char *s, int c)
+{
+	unsigned char	*buff;
+	unsigned char	char_to_find;
+
+	char_to_find = (unsigned char)c;
+	buff = (unsigned char *)s;
+	while (*buff)
+	{
+		if (*buff == char_to_find)
+			return ((char *)buff);
+		buff++;
+	}
+	if (*buff == char_to_find)
+		return ((char *)buff);
+	return (NULL);
+}
+
+static void	copy_strings(char *dst, char *s1, char *s2)
+{
+	size_t	i;
+	size_t	j;
+
+	i = 0;
+	j = 0;
+	while (s1 && s1[j])
+		dst[i++] = s1[j++];
+	j = 0;
+	while (s2 && s2[j])
+		dst[i++] = s2[j++];
+	dst[i] = '\0';
+}
+
+char	*ft_strjoin(char *s1, char *s2)
+{
+	char	*return_str;
+	size_t	len_s1;
+	size_t	len_s2;
+
+	if (!s1 && !s2)
+		return (NULL);
+	len_s1 = 0;
+	len_s2 = 0;
+	if (s1)
+		len_s1 = ft_strlen(s1);
+	if (s2)
+		len_s2 = ft_strlen(s2);
+	return_str = malloc(len_s1 + len_s2 + 1);
+	if (!return_str)
+		return (free(s1), NULL);
+	copy_strings(return_str, s1, s2);
+	free(s1);
+	return (return_str);
+}
+
+size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i] != '\0')
+		i++;
+	return (i);
+}
+
+char	*ft_strdup(const char *s)
+{
+	unsigned char	*str;
+	int				i;
+
+	i = 0;
+	str = (unsigned char *)malloc(ft_strlen(s) + 1);
+	if (!str)
+		return (NULL);
+	while (s[i] != '\0')
+	{
+		str[i] = s[i];
+		i++;
+	}
+	str[i] = '\0';
+	return ((char *)str);
+}
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/text.txt`:
+
+```````txt
+    According to all known laws of aviation, there is no way a bee should be able to fly.\nIts wings are too small to get its fat little body off the ground.\nThe bee, of course, flies anyway because bees don't care what humans think is impossible.
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/get_next_line_bonus.c`:
+
+```````c
+#include "get_next_line_bonus.h"
+
+static char	*take_after_new_line(char *temp)
+{
+	int		i;
+	int		j;
+	char	*dest;
+
+	i = 0;
+	while (temp[i] && temp[i] != '\n')
+		i++;
+	if (!temp[i])
+	{
+		free(temp);
+		return (NULL);
+	}
+	dest = malloc(sizeof(char) * (ft_strlen(temp) - i + 1));
+	if (!dest)
+		return (free(temp), NULL);
+	j = 0;
+	while (temp[i])
+		dest[j++] = temp[++i];
+	dest[j] = '\0';
+	free(temp);
+	return (dest);
+}
+
+static char	*take_until_new_line(char *str)
+{
+	int		i;
+	char	*dest;
+
+	i = 0;
+	if (!str[i])
+		return (NULL);
+	while (str && str[i] && str[i] != '\n')
+		i++;
+	if (str[i] == '\n')
+		i++;
+	dest = malloc(sizeof(char) * (i + 1));
+	if (!dest)
+		return (NULL);
+	i = 0;
+	while (str && str[i] && str[i] != '\n')
+	{
+		dest[i] = str[i];
+		i++;
+	}
+	if (str[i] == '\n')
+		dest[i++] = '\n';
+	dest[i] = '\0';
+	return (dest);
+}
+
+static char	*read_until_new_line(int fd, char **str)
+{
+	char	*buff;
+	int		bytes_read;
+
+	if (!*str)
+	{
+		*str = malloc(1 * sizeof(char));
+		*str[0] = '\0';
+	}
+	if (!*str)
+		return (NULL);
+	buff = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!buff)
+		return (free(*str), NULL);
+	bytes_read = 1;
+	while (!ft_strchr(*str, '\n') && bytes_read != 0)
+	{
+		bytes_read = read(fd, buff, BUFFER_SIZE);
+		if (bytes_read == -1)
+			return (free(buff), free(*str), NULL);
+		buff[bytes_read] = '\0';
+		*str = ft_strjoin(*str, buff);
+		if (!*str)
+			return (free(buff), NULL);
+	}
+	return (free(buff), *str);
+}
+
+char	*get_next_line(int fd)
+{
+	static char	*str[1024];
+	char		*line;
+
+	if (fd < 0 || BUFFER_SIZE <= 0)
+		return (NULL);
+	str[fd] = read_until_new_line(fd, &str[fd]);
+	if (!str[fd])
+		return (0);
+	line = take_until_new_line(str[fd]);
+	if (!line)
+	{
+		free(line);
+		free(str[fd]);
+		str[fd] = NULL;
+		return (NULL);
+	}
+	str[fd] = take_after_new_line(str[fd]);
+	return (line);
+}
+
+/*int	main()
+{
+	int fd1 = open("t1", O_RDONLY);
+	int fd2 = open("t2", O_RDONLY);
+	char	*line;
+
+	while ((line = get_next_line(fd1)) != NULL)
+	{
+		printf("%s", line);
+		free(line);
+		printf("%c", '\n');
+		while ((line = get_next_line(fd2)) != NULL)
+		{
+			printf("%s", line);
+			free(line);
+		}
+		printf("%c", '\n');
+	}
+	close(fd1);
+	close(fd2);
+	return (0);
+}*/
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/output.txt`:
+
+```````txt
+Project Path: /home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line
+
+Source Tree:
+
+```
+get_next_line
+├── get_next_line_utils.c
+├── text.txt
+├── get_next_line.o
+├── output.txt
+├── get_next_line.a
+├── Makefile
+├── explenation.txt
+├── get_next_line_utils.o
+├── get_next_line-subject.md
+├── get_next_line.h
+├── get_next_line.c
+├── test1.txt
+└── main.c
+
+```
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/get_next_line_utils.c`:
+
+```````c
+#include "get_next_line.h"
+
+char	*ft_strchr(const char *s, int c)
+{
+	unsigned char	*buff;
+	unsigned char	char_to_find;
+
+	char_to_find = (unsigned char)c;
+	buff = (unsigned char *)s;
+	while (*buff)
+	{
+		if (*buff == char_to_find)
+			return ((char *)buff);
+		buff++;
+	}
+	if (*buff == char_to_find)
+		return ((char *)buff);
+	return (NULL);
+}
+
+static void	copy_strings(char *dst, char *s1, char *s2)
+{
+	size_t	i;
+	size_t	j;
+
+	i = 0;
+	j = 0;
+	while (s1 && s1[j])
+		dst[i++] = s1[j++];
+	j = 0;
+	while (s2 && s2[j])
+		dst[i++] = s2[j++];
+	dst[i] = '\0';
+}
+
+char	*ft_strjoin(char *s1, char *s2)
+{
+	char	*return_str;
+	size_t	len_s1;
+	size_t	len_s2;
+
+	if (!s1 && !s2)
+		return (NULL);
+	len_s1 = 0;
+	len_s2 = 0;
+	if (s1)
+		len_s1 = ft_strlen(s1);
+	if (s2)
+		len_s2 = ft_strlen(s2);
+	return_str = malloc(len_s1 + len_s2 + 1);
+	if (!return_str)
+		return (free(s1), NULL);
+	copy_strings(return_str, s1, s2);
+	free(s1);
+	return (return_str);
+}
+
+size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i] != '\0')
+		i++;
+	return (i);
+}
+
+char	*ft_strdup(const char *s)
+{
+	unsigned char	*str;
+	int				i;
+
+	i = 0;
+	str = (unsigned char *)malloc(ft_strlen(s) + 1);
+	if (!str)
+		return (NULL);
+	while (s[i] != '\0')
+	{
+		str[i] = s[i];
+		i++;
+	}
+	str[i] = '\0';
+	return ((char *)str);
+}
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/text.txt`:
+
+```````txt
+    According to all known laws of aviation, there is no way a bee should be able to fly.\nIts wings are too small to get its fat little body off the ground.\nThe bee, of course, flies anyway because bees don't care what humans think is impossible.
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/output.txt`:
+
+```````txt
+Project Path: /home/mateo/Nextcloud/workspace/42/exercises/get_next_line
+
+Source Tree:
+
+```
+get_next_line
+├── get_next_line_utils.c
+├── get_next_line_bonus.c
+├── Makefile
+├── gn.zip
+├── get_next_line-subject.md
+├── get_next_line_bonus.h
+├── get_next_line_utils_bonus.c
+├── get_next_line.h
+├── get_next_line.c
+└── main.c
+
+```
+
+`/home/mateo/Nextcloud/workspace/42/exercises/get_next_line/get_next_line_utils.c`:
+
+```````c
+#include "get_next_line.h"
+
+char	*ft_strchr(const char *s, int c)
+{
+	unsigned char	*buff;
+	unsigned char	char_to_find;
+
+	char_to_find = (unsigned char)c;
+	buff = (unsigned char *)s;
+	while (*buff)
+	{
+		if (*buff == char_to_find)
+			return ((char *)buff);
+		buff++;
+	}
+	if (*buff == char_to_find)
+		return ((char *)buff);
+	return (NULL);
+}
+
+static void	copy_strings(char *dst, char *s1, char *s2)
+{
+	size_t	i;
+	size_t	j;
+
+	i = 0;
+	j = 0;
+	while (s1 && s1[j])
+		dst[i++] = s1[j++];
+	j = 0;
+	while (s2 && s2[j])
+		dst[i++] = s2[j++];
+	dst[i] = '\0';
+}
+
+char	*ft_strjoin(char *s1, char *s2)
+{
+	char	*return_str;
+	size_t	len_s1;
+	size_t	len_s2;
+
+	if (!s1 && !s2)
+		return (NULL);
+	len_s1 = 0;
+	len_s2 = 0;
+	if (s1)
+		len_s1 = ft_strlen(s1);
+	if (s2)
+		len_s2 = ft_strlen(s2);
+	return_str = malloc(len_s1 + len_s2 + 1);
+	if (!return_str)
+		return (free(s1), NULL);
+	copy_strings(return_str, s1, s2);
+	free(s1);
+	return (return_str);
+}
+
+size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i] != '\0')
+		i++;
+	return (i);
+}
+
+char	*ft_strdup(const char *s)
+{
+	unsigned char	*str;
+	int				i;
+
+	i = 0;
+	str = (unsigned char *)malloc(ft_strlen(s) + 1);
+	if (!str)
+		return (NULL);
+	while (s[i] != '\0')
+	{
+		str[i] = s[i];
+		i++;
+	}
+	str[i] = '\0';
+	return ((char *)str);
+}
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/get_next_line/get_next_line_bonus.c`:
+
+```````c
+#include "get_next_line_bonus.h"
+
+static char	*take_after_new_line(char *temp)
+{
+	int		i;
+	int		j;
+	char	*dest;
+
+	i = 0;
+	while (temp[i] && temp[i] != '\n')
+		i++;
+	if (!temp[i])
+	{
+		free(temp);
+		return (NULL);
+	}
+	dest = malloc(sizeof(char) * (ft_strlen(temp) - i + 1));
+	if (!dest)
+		return (free(temp), NULL);
+	j = 0;
+	while (temp[i])
+		dest[j++] = temp[++i];
+	dest[j] = '\0';
+	free(temp);
+	return (dest);
+}
+
+static char	*take_until_new_line(char *str)
+{
+	int		i;
+	char	*dest;
+
+	i = 0;
+	if (!str[i])
+		return (NULL);
+	while (str && str[i] && str[i] != '\n')
+		i++;
+	if (str[i] == '\n')
+		i++;
+	dest = malloc(sizeof(char) * (i + 1));
+	if (!dest)
+		return (NULL);
+	i = 0;
+	while (str && str[i] && str[i] != '\n')
+	{
+		dest[i] = str[i];
+		i++;
+	}
+	if (str[i] == '\n')
+		dest[i++] = '\n';
+	dest[i] = '\0';
+	return (dest);
+}
+
+static char	*read_until_new_line(int fd, char **str)
+{
+	char	*buff;
+	int		bytes_read;
+
+	if (!*str)
+	{
+		*str = malloc(1 * sizeof(char));
+		*str[0] = '\0';
+	}
+	if (!*str)
+		return (NULL);
+	buff = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!buff)
+		return (free(*str), NULL);
+	bytes_read = 1;
+	while (!ft_strchr(*str, '\n') && bytes_read != 0)
+	{
+		bytes_read = read(fd, buff, BUFFER_SIZE);
+		if (bytes_read == -1)
+			return (free(buff), free(*str), NULL);
+		buff[bytes_read] = '\0';
+		*str = ft_strjoin(*str, buff);
+		if (!*str)
+			return (free(buff), NULL);
+	}
+	return (free(buff), *str);
+}
+
+char	*get_next_line(int fd)
+{
+	static char	*str[1024];
+	char		*line;
+
+	if (fd < 0 || BUFFER_SIZE <= 0)
+		return (NULL);
+	str[fd] = read_until_new_line(fd, &str[fd]);
+	if (!str[fd])
+		return (0);
+	line = take_until_new_line(str[fd]);
+	if (!line)
+	{
+		free(line);
+		free(str[fd]);
+		str[fd] = NULL;
+		return (NULL);
+	}
+	str[fd] = take_after_new_line(str[fd]);
+	return (line);
+}
+/*int	main()
+{
+	int fd1 = open("t1", O_RDONLY);
+	int fd2 = open("t2", O_RDONLY);
+	char	*line;
+
+	while ((line = get_next_line(fd1)) != NULL)
+	{
+		printf("%s", line);
+		free(line);
+		printf("%c", '\n');
+		while ((line = get_next_line(fd2)) != NULL)
+		{
+			printf("%s", line);
+			free(line);
+		}
+		printf("%c", '\n');
+	}
+	close(fd1);
+	close(fd2);
+	return (0);
+}*/
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/get_next_line/Makefile`:
+
+```````
+NAME = get_next_line.a
+
+CC = cc
+CFLAGS = -Wall -Wextra -Werror $(BUFFER_SIZE)
+
+SRCS = get_next_line.c get_next_line_utils.c
+OBJS = $(SRCS:.c=.o)
+
+HEADER = get_next_line.h
+
+all: $(NAME)
+
+$(NAME): $(OBJS)
+	ar rcs $(NAME) $(OBJS)
+
+%.o: %.c $(HEADER)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS)
+
+fclean: clean
+	rm -f $(NAME)
+
+re: fclean all
+
+.PHONY: all clean fclean re
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/get_next_line/get_next_line-subject.md`:
+
+```````md
+# Get Next Line
+
+## Leer una línea de un fd es demasiado aburrido
+
+_Resumen: El objetivo de este proyecto es simple: programar una función que devuelva
+una línea leída de un file descriptor._
+
+```
+Versión: 12
+```
+
+## Índice general
+
+- I. Objetivos
+- II. Instrucciones generales
+- III. Parte obligatoria
+- IV. Parte bonus
+- V. Entrega y evaluación
+
+
+# Capítulo I Objetivos
+
+Este proyecto no solo te permitirá añadir una función bastante práctica a tu colección;
+también te hará aprender el increíble concepto de las variables estáticas enC.
+
+
+# Capítulo II Instrucciones generales
+
+- Tu proyecto deberá estar escrito en C.
+- Tu proyecto debe estar escrito siguiendo la Norma. Si tienes archivos o funciones
+    adicionales, estas están incluidas en la verificación de la Norma y tendrás un 0 si
+    hay algún error de norma en cualquiera de ellos.
+- Tus funciones no deben terminar de forma inesperada (segfault, bus error, double
+    free, etc) excepto en el caso de comportamientos indefinidos. Si esto sucede, tu
+    proyecto será considerado no funcional y recibirás un 0 durante la evaluación.
+- Toda la memoria asignada en el heap deberá liberarse adecuadamente cuando sea
+    necesario. No se permitirán leaks de memoria.
+- Si el enunciado lo requiere, deberás entregar unMakefileque compilará tus archivos
+    fuente al output requerido con las flags-Wall, -Werrory -Wextra, utilizar cc y
+    por supuesto tuMakefileno debe hacer relink.
+- TuMakefiledebe contener al menos las normas$(NAME),all,clean,fcleany
+    re.
+- Para entregar los bonus de tu proyecto deberás incluir una regla bonus en tu
+    Makefile, en la que añadirás todos los headers, librerías o funciones que estén
+    prohibidas en la parte principal del proyecto. Los bonus deben estar en archivos
+    distintos_bonus.{c/h}. La parte obligatoria y los bonus se evalúan por separado.
+- Si tu proyecto permite el uso de lalibft, deberás copiar su fuente y susMakefile
+    asociados en un directoriolibftcon su correspondienteMakefile. ElMakefile
+    de tu proyecto debe compilar primero la librería utilizando suMakefile, y después
+    compilar el proyecto.
+- Te recomendamos crear programas de prueba para tu proyecto, aunque este trabajo
+    **no será entregado ni evaluado**. Te dará la oportunidad de verificar que tu
+    programa funciona correctamente durante tu evaluación y la de otros compañeros.
+    Y sí, tienes permitido utilizar estas pruebas durante tu evaluación o la de otros
+    compañeros.
+- Entrega tu trabajo en tu repositorioGitasignado. Solo el trabajo de tu repositorio
+    Gitserá evaluado. Si Deepthought evalúa tu trabajo, lo hará después de tus com-
+
+
+Get Next Line Leer una línea de un fd es demasiado aburrido
+
+```
+pañeros. Si se encuentra un error durante la evaluación de Deepthought, esta habrá
+terminado.
+```
+
+# Capítulo III Parte obligatoria
+
+```
+Nombre de función: get_next_line
+```
+
+```
+Prototipo: char *get_next_line(int fd);
+```
+
+```
+Archivos a entregar get_next_line.c, get_next_line_utils.c, get_next_line.h
+```
+
+```
+Parámetros fd: File descriptor del que leer
+Valor devuelto Si todo va bien: la línea leída
+En caso de fallo o si la lectura termina: NULL
+```
+
+```
+Funciones autorizadas read, malloc, free
+```
+
+```
+Descripción Escribe una función que devuelva la línea leída de
+un file descriptor
+```
+- Llamar a tu funciónget_next_linede manera repetida (por ejemplo, usando un
+    bucle) te permitirá leer el contenido del archivo hacia el que apunta el file descriptor,
+    **línea a línea** , hasta el final.
+- Tu función deberá devolver la línea que se acaba de leer.
+    Si no hay nada más que leer o si ha ocurrido un error, deberá devolverNULL.
+- Asegúrate de que tu función se comporta adecuadamente cuando lea de un archivo
+    y cuando lea de stdin.
+- Ten en cuenta que la línea devuelta debe terminar con el caracter
+    n, excepto si se ha llegado al final del archivo y esté no termina con un caracter
+    n.
+- En el headerget_next_line.hdeberás tener como mínimo el prototipo de la fun-
+    ciónget_next_line.
+- Añade todas las funciones de ayuda que necesites en el archivoget_next_line_utils.c
+
+
+Get Next Line Leer una línea de un fd es demasiado aburrido
+
+```
+Un buen comienzo sería saber qué es una variable estatica.
+```
+
+Get Next Line Leer una línea de un fd es demasiado aburrido
+
+- Tu programa debe compilar con el flag-D BUFFER_SIZE=xx. Este flag se utilizará
+    para determinar el tamaño del buffer de las lecturas de tuget_next_line(). Este
+    parámetro será modificado por tus evaluadores y por Moulinette para probar tu
+    programa.
+
+```
+Debemos ser capaces de compilar este proyecto con y sin el flag -D
+BUFFER_SIZE, junto a los flags habituales. Puedes elegir el valor por
+defecto que prefieras.
+```
+- El programa se compilará de la siguiente forma (se utiliza como ejemplo un tamaño
+    de buffer de 42):
+    cc -Wall -Werror -Wextra -D BUFFER_SIZE=42 <archivos>.c.
+- Se considera queget_next_line()tiene un comportamiento indeterminado si el
+    archivo al que apunta el fd ha cambiado desde la última vez que se llamó, siempre
+    queread()no haya llegado al final del archivo.
+- Se considera queget_next_line()tiene un comportamiento indeterminado cuando
+    lo que se lee es un archivo binario. Sin embargo, puedes implementar alguna manera
+    lógica de sortear este problema, si quieres.
+
+```
+¿Funciona correctamente tu get_next_line si el BUFFER_SIZE es 9999?
+¿Y si es 1? ¿Qué tal con 10000000? ¿Sabes por qué?
+```
+```
+Intenta leer lo menos posible cada vez que se llame a
+get_next_line(). Si encuentras un salto de línea, deberás devolver la
+línea actual. No leas el archivo entero y luego proceses cada línea.
+```
+```
+Prohibido
+```
+- No se permite la utilización de tulibften este proyecto.
+- Se prohibe la utilización delseek
+- Se prohibe la utilización de variables globales.
+
+
+# Capítulo IV Parte bonus
+
+Este proyecto es bastante directo y no deja mucho margen a los bonus. Sin embargo,
+confiamos en tu creatividad. Si has completado la parte obligatoria, inténtalo con estos
+bonus.
+
+```
+Aquí tienes los requisitos de la parte bonus:
+```
+- Desarrollaget_next_line()con una sola variable estática.
+- Tuget_next_linetiene que ser capaz de gestionar múltiples fd a la vez. Es decir,
+    si tienes tres fd disponibles para lectura (por ejemplo: 3, 4 y 5), debes poder utilizar
+    get_next_lineuna vez sobre el fd 3, otra vez sobre el fd 4, y otra vez sobre el fd
+    5 de forma alterna. Y sí, no debe perder el hilo de lectura de cada uno de los fd.
+
+Añade el sufijo_bonus.[c\h]a los archivos de esta parte bonus. Esto quiere decir
+que además de los archivos de la parte obligatoria, tienes que entregar los tres archivos
+siguientes:
+
+- get_next_line_bonus.c
+- get_next_line_bonus.h
+- get_next_line_utils_bonus.c
+
+```
+La parte bonus solo será evaluada si la parte obligatoria está
+PERFECTA. Perfecta significa que se ha completado en su totalidad
+y funciona perfectamente, sin ningún fallo. Si no has completado
+TODOS los requisitos de la parte obligatoria, tu parte bonus no será
+evaluada de ninguna manera.
+```
+
+# Capítulo V Entrega y evaluación
+
+Entrega tus ejercicios el tu directorioGit, como haces habitualmente. Solo se evaluará
+el trabajo que haya dentro de tu repositorio. Comprueba varias veces que el nombre de
+tus archivos es el correcto.
+
+```
+Cuando hagas los ejercicios, recuerda:
+1) Tanto el tamaño del buffer como el de la línea pueden tener
+valores muy diferentes.
+2) Un fd no solo apunta a archivos normales.
+Sé inteligente y compara y verifica tus ejercicios con tus
+compañeros. Prepara una batería de pruebas de cara a la evaluación.
+```
+```
+Una vez superado, no dudes en añadir tuget_next_line()a tulift.
+```
+```
+/= ∂ /\/\[](_)§ /\/\@|V †|-|@ ̄| ̄ /-/!570®1<|-\£1_`/¢@/\/\ ε vv!7}{ ???
+```
+
+
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/get_next_line/get_next_line_bonus.h`:
+
+```````h
+#ifndef GET_NEXT_LINE_BONUS_H
+# define GET_NEXT_LINE_BONUS_H
+
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE 42
+# endif
+
+# include <unistd.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <fcntl.h>
+# include <stdint.h>
+# include <limits.h>
+
+char	*ft_strdup(const char *s);
+char	*get_next_line(int fd);
+char	*ft_strchr(const char *s, int c);
+char	*ft_strjoin(char *s1, char *s2);
+
+size_t	ft_strlen(const char *s);
+
+#endif
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/get_next_line/get_next_line_utils_bonus.c`:
+
+```````c
+#include "get_next_line_bonus.h"
+
+char	*ft_strchr(const char *s, int c)
+{
+	int	i;
+
+	i = 0;
+	while (s[i])
+	{
+		if (s[i] == (unsigned char) c)
+			return ((char *)&s[i]);
+		i++;
+	}
+	if ((unsigned char) c == '\0')
+		return ((char *)&s[i]);
+	return (0);
+}
+
+char	*ft_strjoin(char *s1, char *s2)
+{
+	char	*str;
+	int		i;
+	int		j;
+
+	if (s1 == NULL && s2 == NULL)
+		return (free(s1), NULL);
+	i = 0;
+	j = 0;
+	str = (char *)malloc((ft_strlen(s1) + ft_strlen(s2) + 1)
+			* sizeof(char));
+	if (str == NULL)
+		return (free(s1), NULL);
+	while (s1 != NULL && s1[i] != '\0')
+	{
+		str[i] = s1[i];
+		i++;
+	}
+	while (s2 != NULL && s2[j] != '\0')
+	{
+		str[i + j] = s2[j];
+		j++;
+	}
+	str[i + j] = '\0';
+	free(s1);
+	return (str);
+}
+
+size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i] != '\0')
+		i++;
+	return (i);
+}
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/get_next_line/get_next_line.h`:
+
+```````h
+#ifndef GET_NEXT_LINE_H
+# define GET_NEXT_LINE_H
+
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE 42
+# endif
+
+# include <unistd.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <fcntl.h>
+# include <stdint.h>
+# include <limits.h>
+
+char	*get_next_line(int fd);
+char	*ft_strchr(const char *s, int c);
+char	*ft_strjoin(char *s1, char *s2);
+char	*ft_strdup(const char *s);
+
+size_t	ft_strlen(const char *s);
+
+#endif
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/get_next_line/get_next_line.c`:
+
+```````c
+#include "get_next_line.h"
+
+static char	*extract_remainder(char *buffer)
+{
+	int		i;
+	int		j;
+	char	*remainder;
+
+	i = 0;
+	while (buffer[i] && buffer[i] != '\n')
+		i++;
+	if (!buffer[i])
+		return (free(buffer), NULL);
+	remainder = malloc(sizeof(char) * (ft_strlen(buffer) - i + 1));
+	if (!remainder)
+		return (free(buffer), NULL);
+	j = 0;
+	i++;
+	while (buffer[i])
+		remainder[j++] = buffer[i++];
+	remainder[j] = '\0';
+	free(buffer);
+	return (remainder);
+}
+
+static char	*extract_line(char *content)
+{
+	int		i;
+	char	*line;
+
+	i = 0;
+	if (!content[i])
+		return (NULL);
+	while (content && content[i] && content[i] != '\n')
+		i++;
+	line = malloc(sizeof(char) * (i + 2));
+	if (!line)
+		return (NULL);
+	i = 0;
+	while (content && content[i] && content[i] != '\n')
+	{
+		line[i] = content[i];
+		i++;
+	}
+	if (content[i] == '\n')
+		line[i++] = '\n';
+	line[i] = '\0';
+	return (line);
+}
+
+static char	*read_and_accumulate(int fd, char **content)
+{
+	char	*chunk;
+	int		bytes_read;
+
+	// if content is NULL, initialize it as an empty string
+	if (!*content)
+		*content = (char *) ft_strdup("");
+	if (!*content)
+		return (NULL);
+	chunk = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!chunk)
+		return (free(*content), NULL);
+	bytes_read = 1;
+	while (!ft_strchr(*content, '\n') && bytes_read > 0)
+	{
+		bytes_read = read(fd, chunk, BUFFER_SIZE);
+		if (bytes_read == -1)
+			return (free(chunk), free(*content), NULL); //TODO why the free content ???
+		chunk[bytes_read] = '\0';
+		*content = ft_strjoin(*content, chunk);
+		if (!*content)
+			return (free(chunk), NULL);
+	}
+	return (free(chunk), *content);
+}
+
+char	*get_next_line(int fd)
+{
+	static char	*content_store;
+	char		*line;
+
+	if (fd < 0 || BUFFER_SIZE <= 0)
+		return (NULL);
+	content_store = read_and_accumulate(fd, &content_store);
+	if (!content_store)
+		return (NULL);
+	line = extract_line(content_store);
+	if (!line)
+	{
+		free(content_store);
+		content_store = NULL;
+		return (NULL);
+	}
+	content_store = extract_remainder(content_store);
+	return (line);
+}
+
+/*int main()
+{
+	//Simple main
+	
+	int	fd;
+	char	*line;
+
+	fd = open("t1", O_RDONLY);
+	while ((line = get_next_line(1)) != NULL)
+	{
+		printf("%s", line);
+		free(line);
+	}
+	printf("%s", line);
+	close(fd);
+	return (0);
+}*/
+
+/*int	main(int argc, char *argv[])
+{
+	char *buffer;
+
+	// Read from file if an argument is provided on the command line
+	if (argc == 2)
+	{
+		// Open the file for reading
+		int fd = open(argv[1], O_RDONLY);
+		if (fd == -1)
+		{
+			perror("Error opening file");
+			exit(EXIT_FAILURE);
+		}
+
+		// Calling the function to read the file contents
+		while ((buffer = get_next_line(fd)) != NULL)
+		{
+			// Check if memory was allocated correctly
+			if (buffer == NULL)
+			{
+				fprintf(stderr, "Failure to allocate buffer memory\n");
+				break;
+			}
+
+			// Process the line read
+			printf("RECEIVED: %s\n", buffer);
+
+			// Release memory allocated to the line
+			free(buffer);
+		}
+
+		// Close file descriptor
+		if (close(fd) == -1)
+		{
+			perror("Error closing file");
+			exit(EXIT_FAILURE);
+		}
+	}
+	// Read from stdin if no arguments are provided on the command line
+	else if (argc == 1)
+	{
+		printf("Enter text from stdin:\n");
+		while ((buffer = get_next_line(STDIN_FILENO)) != NULL)
+		{
+			// Check if memory was allocated correctly
+			if (buffer == NULL)
+			{
+				fprintf(stderr, "Failure to allocate buffer memory\n");
+				break;
+			}
+
+			// Process the line read
+			printf("RECEIVED: %s\n", buffer);
+
+			// Release memory allocated to the line
+			free(buffer);
+		}
+	}
+	else
+	{
+		fprintf(stderr, "Uso: %s [nombre_del_archivo]\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	return 0;
+}*/
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/get_next_line/main.c`:
+
+```````c
+#include <string.h>
+#include "get_next_line.h"
+
+int main(void)
+{
+	int fd;
+	char *line;
+
+	// Test reading from a file
+	fd = open("test.txt", O_RDONLY);
+	if (fd == -1)
+	{
+		perror("Error opening file");
+		return 1;
+	}
+
+	printf("Reading from file:\n");
+	while ((line = get_next_line(fd)) != NULL)
+	{
+		printf("%s", line);
+		free(line);
+	}
+	close(fd);
+
+	// Test reading from standard input
+	printf("\nReading from standard input (type 'quit' to exit):\n");
+	while ((line = get_next_line(0)) != NULL)
+	{
+		printf("Line read: %s", line);
+		if (strcmp(line, "quit\n") == 0)
+		{
+			free(line);
+			break;
+		}
+		free(line);
+	}
+
+	return 0;
+}
+
+```````
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/Makefile`:
+
+```````
+NAME = get_next_line.a
+
+CC = cc
+CFLAGS = -Wall -Wextra -Werror $(BUFFER_SIZE)
+
+SRCS = get_next_line.c get_next_line_utils.c
+OBJS = $(SRCS:.c=.o)
+
+HEADER = get_next_line.h
+
+all: $(NAME)
+
+$(NAME): $(OBJS)
+	ar rcs $(NAME) $(OBJS)
+
+%.o: %.c $(HEADER)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS)
+
+fclean: clean
+	rm -f $(NAME)
+
+re: fclean all
+
+.PHONY: all clean fclean re
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/explenation.txt`:
+
+```````txt
+Key Observations:
+
+    Makefile Issue:
+    Your Makefile currently uses:
+
+CFLAGS = -Wall -Wextra -Werror $(BUFFER_SIZE)
+
+This does not define the BUFFER_SIZE macro for the compiler. Instead, you must explicitly define it, for example:
+
+    CFLAGS = -Wall -Wextra -Werror -D BUFFER_SIZE=42
+
+    This ensures the code sees the correct buffer size during compilation.
+
+    Memory Management:
+    The code generally follows a proper pattern for freeing allocated memory upon errors or when finished with data. Just ensure you consistently handle all return paths to prevent memory leaks or double frees.
+
+    Indexing and Off-by-One Checks:
+    Review indexing in take_after_new_line and take_until_new_line to confirm they correctly handle the newline character and remainder of the string. The code logic seems correct, but always verify that each i++ aligns with your intended behavior.
+
+    Bonus vs Mandatory Part Separation:
+    If you are implementing both the mandatory and bonus parts, ensure that the bonus sources (*_bonus.c and *_bonus.h) and mandatory sources are handled separately, with a proper bonus rule in the Makefile. Both parts should compile and run independently.
+
+Summary:
+
+    Adjust the Makefile to properly define BUFFER_SIZE.
+    Verify all indexing and memory handling.
+    Keep bonus and mandatory code clearly separated if required by the project.
+
+You said:
+step by step following the code 
+ChatGPT
+
+Below is a detailed, step-by-step walkthrough of the core logic used in get_next_line.c and its helper functions. The explanation assumes a basic understanding of C, pointers, and memory allocation:
+
+Key Functions Involved:
+
+    get_next_line(int fd)
+    read_and_accumulate(int fd, char **content)
+    extract_line(char *content)
+    extract_remainder(char *buffer)
+
+General Idea
+
+    get_next_line reads data from a file descriptor fd line by line.
+    Each call to get_next_line returns one line including the newline character '\n' if there is one, or the last chunk if we reached end-of-file (EOF).
+    To achieve this, the function maintains a static buffer (content_store in get_next_line.c) that stores previously read data that didn’t form a complete line yet.
+    On each call:
+        It reads new data (if needed) and accumulates it into content_store.
+        Extracts one full line (if available).
+        Updates content_store to contain only the part after the extracted line (the remainder).
+
+Step-by-Step Through get_next_line(int fd)
+
+1. Initial Checks
+
+if (fd < 0 || BUFFER_SIZE <= 0)
+    return (NULL);
+
+    If the file descriptor is invalid or BUFFER_SIZE is not correctly set, return NULL immediately.
+
+2. Calling read_and_accumulate
+
+content_store = read_and_accumulate(fd, &content_store);
+if (!content_store)
+    return (NULL);
+
+    This function ensures that content_store contains at least one full line if it can be read from fd. If there's an error (like read returns -1 or memory allocation fails), it returns NULL.
+
+3. Extracting a Line
+
+line = extract_line(content_store);
+if (!line)
+{
+    free(content_store);
+    content_store = NULL;
+    return (NULL);
+}
+
+    extract_line pulls the first complete line from content_store.
+    If no line can be extracted (which can happen if content_store is empty or an allocation fails), free content_store and return NULL.
+
+4. Updating Remainder
+
+content_store = extract_remainder(content_store);
+return (line);
+
+    extract_remainder removes the line we just extracted from content_store, leaving only what's left after the newline.
+    Then line is returned.
+
+Inside read_and_accumulate(int fd, char **content)
+
+Goal:
+
+    Read from fd and add new data to *content until either a newline is found or no more data can be read.
+
+Step-by-Step:
+
+    Initialize *content if NULL
+
+if (!*content)
+    *content = ft_strdup("");
+
+    If there’s no stored content yet, create an empty string.
+
+Allocate a Temporary Buffer
+
+chunk = malloc((BUFFER_SIZE + 1) * sizeof(char));
+if (!chunk)
+    return (free(*content), NULL);
+
+    chunk will be used to store what is read from the file before concatenating it to *content.
+
+Reading in a Loop
+
+bytes_read = 1;
+while (!ft_strchr(*content, '\n') && bytes_read > 0)
+{
+    bytes_read = read(fd, chunk, BUFFER_SIZE);
+    if (bytes_read == -1)
+        return (free(chunk), free(*content), NULL);
+    
+    chunk[bytes_read] = '\0';
+    *content = ft_strjoin(*content, chunk);
+    if (!*content)
+        return (free(chunk), NULL);
+}
+
+    While no newline is found in *content and bytes_read is positive, keep reading.
+    read attempts to fill chunk with BUFFER_SIZE characters. On success, bytes_read is the count of characters read.
+    If read returns -1, there was an error. Free memory and return NULL.
+    Add a '\0' terminator to chunk.
+    Use ft_strjoin to append the contents of chunk to *content. This may reallocate memory and free the old content.
+    If ft_strjoin fails, free memory and return NULL.
+    If a newline '\n' is found or bytes_read becomes 0 (end-of-file), stop reading.
+
+Finalize and Return
+
+    return (free(chunk), *content);
+
+        Free the temporary buffer chunk.
+        Return *content which now contains up to the first full line (or all remaining data at EOF).
+
+Inside extract_line(char *content)
+
+Goal:
+
+    Given a string content that may contain multiple lines, extract the first line (ending with '\n' if it exists).
+
+Step-by-Step:
+
+    Find the End of the First Line
+
+i = 0;
+while (content && content[i] && content[i] != '\n')
+    i++;
+
+    Move through content until we find a newline or reach the end.
+
+Allocate Memory for line
+
+line = malloc(sizeof(char) * (i + 2));
+if (!line)
+    return (NULL);
+
+    We allocate enough space for all characters up to the newline and one extra for '\n' if it exists plus the '\0' terminator.
+    Note: If we stopped on a newline, i is at the newline’s position. i + 2 accounts for the newline plus '\0'.
+
+Copy Characters into line
+
+    i = 0;
+    while (content && content[i] && content[i] != '\n')
+    {
+        line[i] = content[i];
+        i++;
+    }
+    if (content[i] == '\n')
+        line[i++] = '\n';
+    line[i] = '\0';
+
+        Copy characters until we hit the newline or end of string.
+        If a newline is found, include it in line.
+        Terminate line with '\0'.
+
+    Return line
+        line now contains the complete first line, ready to be returned.
+
+Inside extract_remainder(char *buffer)
+
+Goal:
+
+    After extracting a line, remove it from buffer so that buffer only holds the rest of the text after the newline.
+
+Step-by-Step:
+
+    Find the Start of the Next Line
+
+i = 0;
+while (buffer[i] && buffer[i] != '\n')
+    i++;
+if (!buffer[i])
+    return (free(buffer), NULL);
+
+    Iterate until we find the newline character.
+    If we don’t find a newline, it means we had no extra line. We can free buffer and return NULL as there's no remainder.
+
+Allocate New Buffer for the Remainder
+
+remainder = malloc(sizeof(char) * (ft_strlen(buffer) - i + 1));
+if (!remainder)
+    return (free(buffer), NULL);
+
+    Allocate space for everything after the newline, plus a '\0'.
+
+Copy the Remainder
+
+    i++;
+    j = 0;
+    while (buffer[i])
+        remainder[j++] = buffer[i++];
+    remainder[j] = '\0';
+    free(buffer);
+    return (remainder);
+
+        Skip the newline character by incrementing i once more.
+        Copy the rest of the old buffer into remainder.
+        Free the old buffer.
+        Return remainder, which will become the new content_store in get_next_line.
+
+Putting It All Together
+
+    Each call to get_next_line(fd) tries to make sure content_store has at least one full line.
+    read_and_accumulate reads more data from fd if no newline is found.
+    When a newline is found (or EOF is reached), extract_line gets the next line, and extract_remainder updates content_store so that next time get_next_line is called, it starts from where it left off.
+    If any error or end condition is met, the function returns NULL.
+
+This logic ensures that subsequent calls to get_next_line from the same fd will continue returning lines sequentially until there are no more lines to read (EOF
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/get_next_line-subject.md`:
+
+```````md
+# Get Next Line
+
+## Leer una línea de un fd es demasiado aburrido
+
+_Resumen: El objetivo de este proyecto es simple: programar una función que devuelva
+una línea leída de un file descriptor._
+
+```
+Versión: 12
+```
+
+## Índice general
+
+- I. Objetivos
+- II. Instrucciones generales
+- III. Parte obligatoria
+- IV. Parte bonus
+- V. Entrega y evaluación
+
+
+# Capítulo I Objetivos
+
+Este proyecto no solo te permitirá añadir una función bastante práctica a tu colección;
+también te hará aprender el increíble concepto de las variables estáticas enC.
+
+
+# Capítulo II Instrucciones generales
+
+- Tu proyecto deberá estar escrito en C.
+- Tu proyecto debe estar escrito siguiendo la Norma. Si tienes archivos o funciones
+    adicionales, estas están incluidas en la verificación de la Norma y tendrás un 0 si
+    hay algún error de norma en cualquiera de ellos.
+- Tus funciones no deben terminar de forma inesperada (segfault, bus error, double
+    free, etc) excepto en el caso de comportamientos indefinidos. Si esto sucede, tu
+    proyecto será considerado no funcional y recibirás un 0 durante la evaluación.
+- Toda la memoria asignada en el heap deberá liberarse adecuadamente cuando sea
+    necesario. No se permitirán leaks de memoria.
+- Si el enunciado lo requiere, deberás entregar unMakefileque compilará tus archivos
+    fuente al output requerido con las flags-Wall, -Werrory -Wextra, utilizar cc y
+    por supuesto tuMakefileno debe hacer relink.
+- TuMakefiledebe contener al menos las normas$(NAME),all,clean,fcleany
+    re.
+- Para entregar los bonus de tu proyecto deberás incluir una regla bonus en tu
+    Makefile, en la que añadirás todos los headers, librerías o funciones que estén
+    prohibidas en la parte principal del proyecto. Los bonus deben estar en archivos
+    distintos_bonus.{c/h}. La parte obligatoria y los bonus se evalúan por separado.
+- Si tu proyecto permite el uso de lalibft, deberás copiar su fuente y susMakefile
+    asociados en un directoriolibftcon su correspondienteMakefile. ElMakefile
+    de tu proyecto debe compilar primero la librería utilizando suMakefile, y después
+    compilar el proyecto.
+- Te recomendamos crear programas de prueba para tu proyecto, aunque este trabajo
+    **no será entregado ni evaluado**. Te dará la oportunidad de verificar que tu
+    programa funciona correctamente durante tu evaluación y la de otros compañeros.
+    Y sí, tienes permitido utilizar estas pruebas durante tu evaluación o la de otros
+    compañeros.
+- Entrega tu trabajo en tu repositorioGitasignado. Solo el trabajo de tu repositorio
+    Gitserá evaluado. Si Deepthought evalúa tu trabajo, lo hará después de tus com-
+
+
+Get Next Line Leer una línea de un fd es demasiado aburrido
+
+```
+pañeros. Si se encuentra un error durante la evaluación de Deepthought, esta habrá
+terminado.
+```
+
+# Capítulo III Parte obligatoria
+
+```
+Nombre de función: get_next_line
+```
+
+```
+Prototipo: char *get_next_line(int fd);
+```
+
+```
+Archivos a entregar get_next_line.c, get_next_line_utils.c, get_next_line.h
+```
+
+```
+Parámetros fd: File descriptor del que leer
+Valor devuelto Si todo va bien: la línea leída
+En caso de fallo o si la lectura termina: NULL
+```
+
+```
+Funciones autorizadas read, malloc, free
+```
+
+```
+Descripción Escribe una función que devuelva la línea leída de
+un file descriptor
+```
+- Llamar a tu funciónget_next_linede manera repetida (por ejemplo, usando un
+    bucle) te permitirá leer el contenido del archivo hacia el que apunta el file descriptor,
+    **línea a línea** , hasta el final.
+- Tu función deberá devolver la línea que se acaba de leer.
+    Si no hay nada más que leer o si ha ocurrido un error, deberá devolverNULL.
+- Asegúrate de que tu función se comporta adecuadamente cuando lea de un archivo
+    y cuando lea de stdin.
+- Ten en cuenta que la línea devuelta debe terminar con el caracter
+    n, excepto si se ha llegado al final del archivo y esté no termina con un caracter
+    n.
+- En el headerget_next_line.hdeberás tener como mínimo el prototipo de la fun-
+    ciónget_next_line.
+- Añade todas las funciones de ayuda que necesites en el archivoget_next_line_utils.c
+
+
+Get Next Line Leer una línea de un fd es demasiado aburrido
+
+```
+Un buen comienzo sería saber qué es una variable estatica.
+```
+
+Get Next Line Leer una línea de un fd es demasiado aburrido
+
+- Tu programa debe compilar con el flag-D BUFFER_SIZE=xx. Este flag se utilizará
+    para determinar el tamaño del buffer de las lecturas de tuget_next_line(). Este
+    parámetro será modificado por tus evaluadores y por Moulinette para probar tu
+    programa.
+
+```
+Debemos ser capaces de compilar este proyecto con y sin el flag -D
+BUFFER_SIZE, junto a los flags habituales. Puedes elegir el valor por
+defecto que prefieras.
+```
+- El programa se compilará de la siguiente forma (se utiliza como ejemplo un tamaño
+    de buffer de 42):
+    cc -Wall -Werror -Wextra -D BUFFER_SIZE=42 <archivos>.c.
+- Se considera queget_next_line()tiene un comportamiento indeterminado si el
+    archivo al que apunta el fd ha cambiado desde la última vez que se llamó, siempre
+    queread()no haya llegado al final del archivo.
+- Se considera queget_next_line()tiene un comportamiento indeterminado cuando
+    lo que se lee es un archivo binario. Sin embargo, puedes implementar alguna manera
+    lógica de sortear este problema, si quieres.
+
+```
+¿Funciona correctamente tu get_next_line si el BUFFER_SIZE es 9999?
+¿Y si es 1? ¿Qué tal con 10000000? ¿Sabes por qué?
+```
+```
+Intenta leer lo menos posible cada vez que se llame a
+get_next_line(). Si encuentras un salto de línea, deberás devolver la
+línea actual. No leas el archivo entero y luego proceses cada línea.
+```
+```
+Prohibido
+```
+- No se permite la utilización de tulibften este proyecto.
+- Se prohibe la utilización delseek
+- Se prohibe la utilización de variables globales.
+
+
+# Capítulo IV Parte bonus
+
+Este proyecto es bastante directo y no deja mucho margen a los bonus. Sin embargo,
+confiamos en tu creatividad. Si has completado la parte obligatoria, inténtalo con estos
+bonus.
+
+```
+Aquí tienes los requisitos de la parte bonus:
+```
+- Desarrollaget_next_line()con una sola variable estática.
+- Tuget_next_linetiene que ser capaz de gestionar múltiples fd a la vez. Es decir,
+    si tienes tres fd disponibles para lectura (por ejemplo: 3, 4 y 5), debes poder utilizar
+    get_next_lineuna vez sobre el fd 3, otra vez sobre el fd 4, y otra vez sobre el fd
+    5 de forma alterna. Y sí, no debe perder el hilo de lectura de cada uno de los fd.
+
+Añade el sufijo_bonus.[c\h]a los archivos de esta parte bonus. Esto quiere decir
+que además de los archivos de la parte obligatoria, tienes que entregar los tres archivos
+siguientes:
+
+- get_next_line_bonus.c
+- get_next_line_bonus.h
+- get_next_line_utils_bonus.c
+
+```
+La parte bonus solo será evaluada si la parte obligatoria está
+PERFECTA. Perfecta significa que se ha completado en su totalidad
+y funciona perfectamente, sin ningún fallo. Si no has completado
+TODOS los requisitos de la parte obligatoria, tu parte bonus no será
+evaluada de ninguna manera.
+```
+
+# Capítulo V Entrega y evaluación
+
+Entrega tus ejercicios el tu directorioGit, como haces habitualmente. Solo se evaluará
+el trabajo que haya dentro de tu repositorio. Comprueba varias veces que el nombre de
+tus archivos es el correcto.
+
+```
+Cuando hagas los ejercicios, recuerda:
+1) Tanto el tamaño del buffer como el de la línea pueden tener
+valores muy diferentes.
+2) Un fd no solo apunta a archivos normales.
+Sé inteligente y compara y verifica tus ejercicios con tus
+compañeros. Prepara una batería de pruebas de cara a la evaluación.
+```
+```
+Una vez superado, no dudes en añadir tuget_next_line()a tulift.
+```
+```
+/= ∂ /\/\[](_)§ /\/\@|V †|-|@ ̄| ̄ /-/!570®1<|-\£1_`/¢@/\/\ ε vv!7}{ ???
+```
+
+
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/get_next_line.h`:
+
+```````h
+#ifndef GET_NEXT_LINE_H
+# define GET_NEXT_LINE_H
+
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE 42
+# endif
+
+# include <unistd.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <fcntl.h>
+# include <stdint.h>
+# include <limits.h>
+
+char	*get_next_line(int fd);
+char	*ft_strchr(const char *s, int c);
+char	*ft_strjoin(char *s1, char *s2);
+char	*ft_strdup(const char *s);
+
+size_t	ft_strlen(const char *s);
+
+#endif
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/get_next_line.c`:
+
+```````c
+#include "get_next_line.h"
+
+static char	*extract_remainder(char *buffer)
+{
+	int		i;
+	int		j;
+	char	*remainder;
+
+	i = 0;
+	while (buffer[i] && buffer[i] != '\n')
+		i++;
+	if (!buffer[i])
+		return (free(buffer), NULL);
+	remainder = malloc(sizeof(char) * (ft_strlen(buffer) - i + 1));
+	if (!remainder)
+		return (free(buffer), NULL);
+	j = 0;
+	i++;
+	while (buffer[i])
+		remainder[j++] = buffer[i++];
+	remainder[j] = '\0';
+	free(buffer);
+	return (remainder);
+}
+
+static char	*extract_line(char *content)
+{
+	int		i;
+	char	*line;
+
+	i = 0;
+	if (!content[i])
+		return (NULL);
+	while (content && content[i] && content[i] != '\n')
+		i++;
+	line = malloc(sizeof(char) * (i + 2));
+	if (!line)
+		return (NULL);
+	i = 0;
+	while (content && content[i] && content[i] != '\n')
+	{
+		line[i] = content[i];
+		i++;
+	}
+	if (content[i] == '\n')
+		line[i++] = '\n';
+	line[i] = '\0';
+	return (line);
+}
+
+static char	*read_and_accumulate(int fd, char **content)
+{
+	char	*chunk;
+	int		bytes_read;
+
+	// if content is NULL, initialize it as an empty string
+	if (!*content)
+		*content = (char *) ft_strdup("");
+	if (!*content)
+		return (NULL);
+	chunk = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!chunk)
+		return (free(*content), NULL);
+	bytes_read = 1;
+	while (!ft_strchr(*content, '\n') && bytes_read > 0)
+	{
+		bytes_read = read(fd, chunk, BUFFER_SIZE);
+		if (bytes_read == -1)
+			return (free(chunk), free(*content), NULL); //TODO why the free content ???
+		chunk[bytes_read] = '\0';
+		*content = ft_strjoin(*content, chunk);
+		if (!*content)
+			return (free(chunk), NULL);
+	}
+	return (free(chunk), *content);
+}
+
+char	*get_next_line(int fd)
+{
+	static char	*content_store;
+	char		*line;
+
+	if (fd < 0 || BUFFER_SIZE <= 0)
+		return (NULL);
+	content_store = read_and_accumulate(fd, &content_store);
+	if (!content_store)
+		return (NULL);
+	line = extract_line(content_store);
+	if (!line)
+	{
+		free(content_store);
+		content_store = NULL;
+		return (NULL);
+	}
+	content_store = extract_remainder(content_store);
+	return (line);
+}
+
+/*int main()
+{
+	//Simple main
+	
+	int	fd;
+	char	*line;
+
+	fd = open("t1", O_RDONLY);
+	while ((line = get_next_line(1)) != NULL)
+	{
+		printf("%s", line);
+		free(line);
+	}
+	printf("%s", line);
+	close(fd);
+	return (0);
+}*/
+
+/*int	main(int argc, char *argv[])
+{
+	char *buffer;
+
+	// Read from file if an argument is provided on the command line
+	if (argc == 2)
+	{
+		// Open the file for reading
+		int fd = open(argv[1], O_RDONLY);
+		if (fd == -1)
+		{
+			perror("Error opening file");
+			exit(EXIT_FAILURE);
+		}
+
+		// Calling the function to read the file contents
+		while ((buffer = get_next_line(fd)) != NULL)
+		{
+			// Check if memory was allocated correctly
+			if (buffer == NULL)
+			{
+				fprintf(stderr, "Failure to allocate buffer memory\n");
+				break;
+			}
+
+			// Process the line read
+			printf("RECEIVED: %s\n", buffer);
+
+			// Release memory allocated to the line
+			free(buffer);
+		}
+
+		// Close file descriptor
+		if (close(fd) == -1)
+		{
+			perror("Error closing file");
+			exit(EXIT_FAILURE);
+		}
+	}
+	// Read from stdin if no arguments are provided on the command line
+	else if (argc == 1)
+	{
+		printf("Enter text from stdin:\n");
+		while ((buffer = get_next_line(STDIN_FILENO)) != NULL)
+		{
+			// Check if memory was allocated correctly
+			if (buffer == NULL)
+			{
+				fprintf(stderr, "Failure to allocate buffer memory\n");
+				break;
+			}
+
+			// Process the line read
+			printf("RECEIVED: %s\n", buffer);
+
+			// Release memory allocated to the line
+			free(buffer);
+		}
+	}
+	else
+	{
+		fprintf(stderr, "Uso: %s [nombre_del_archivo]\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	return 0;
+}*/
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/test1.txt`:
+
+```````txt
+Hello
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/main.c`:
+
+```````c
+#include <string.h>
+#include "get_next_line.h"
+
+int main(void)
+{
+	int fd;
+	char *line;
+
+	// Test reading from a file
+	fd = open("test-no-exist.txt", O_RDONLY);
+	if (fd == -1)
+	{
+		perror("Error opening test-no-exist file");
+		return 1;
+	}
+
+	fd = open("test.txt", O_RDONLY);
+	printf("Reading from file:\n");
+	while ((line = get_next_line(fd)) != NULL)
+	{
+		printf("%s", line);
+		free(line);
+	}
+	close(fd);
+
+	// Test reading from standard input
+	/* printf("\nReading from standard input (type 'quit' to exit):\n"); */
+	/* while ((line = get_next_line(0)) != NULL) */
+	/* { */
+	/* 	printf("Line read: %s", line); */
+	/* 	if (strcmp(line, "quit\n") == 0) */
+	/* 	{ */
+	/* 		free(line); */
+	/* 		break; */
+	/* 	} */
+	/* 	free(line); */
+	/* } */
+
+	return 0;
+}
+
+```````
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/Makefile`:
+
+```````
+NAME = get_next_line.a
+
+CC = cc
+CFLAGS = -Wall -Wextra -Werror $(BUFFER_SIZE)
+
+SRCS = get_next_line.c get_next_line_utils.c
+OBJS = $(SRCS:.c=.o)
+
+HEADER = get_next_line.h
+
+all: $(NAME)
+
+$(NAME): $(OBJS)
+	ar rcs $(NAME) $(OBJS)
+
+%.o: %.c $(HEADER)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS)
+
+fclean: clean
+	rm -f $(NAME)
+
+re: fclean all
+
+.PHONY: all clean fclean re
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/explenation.txt`:
+
+```````txt
+Key Observations:
+
+    Makefile Issue:
+    Your Makefile currently uses:
+
+CFLAGS = -Wall -Wextra -Werror $(BUFFER_SIZE)
+
+This does not define the BUFFER_SIZE macro for the compiler. Instead, you must explicitly define it, for example:
+
+    CFLAGS = -Wall -Wextra -Werror -D BUFFER_SIZE=42
+
+    This ensures the code sees the correct buffer size during compilation.
+
+    Memory Management:
+    The code generally follows a proper pattern for freeing allocated memory upon errors or when finished with data. Just ensure you consistently handle all return paths to prevent memory leaks or double frees.
+
+    Indexing and Off-by-One Checks:
+    Review indexing in take_after_new_line and take_until_new_line to confirm they correctly handle the newline character and remainder of the string. The code logic seems correct, but always verify that each i++ aligns with your intended behavior.
+
+    Bonus vs Mandatory Part Separation:
+    If you are implementing both the mandatory and bonus parts, ensure that the bonus sources (*_bonus.c and *_bonus.h) and mandatory sources are handled separately, with a proper bonus rule in the Makefile. Both parts should compile and run independently.
+
+Summary:
+
+    Adjust the Makefile to properly define BUFFER_SIZE.
+    Verify all indexing and memory handling.
+    Keep bonus and mandatory code clearly separated if required by the project.
+
+You said:
+step by step following the code 
+ChatGPT
+
+Below is a detailed, step-by-step walkthrough of the core logic used in get_next_line.c and its helper functions. The explanation assumes a basic understanding of C, pointers, and memory allocation:
+
+Key Functions Involved:
+
+    get_next_line(int fd)
+    read_and_accumulate(int fd, char **content)
+    extract_line(char *content)
+    extract_remainder(char *buffer)
+
+General Idea
+
+    get_next_line reads data from a file descriptor fd line by line.
+    Each call to get_next_line returns one line including the newline character '\n' if there is one, or the last chunk if we reached end-of-file (EOF).
+    To achieve this, the function maintains a static buffer (content_store in get_next_line.c) that stores previously read data that didn’t form a complete line yet.
+    On each call:
+        It reads new data (if needed) and accumulates it into content_store.
+        Extracts one full line (if available).
+        Updates content_store to contain only the part after the extracted line (the remainder).
+
+Step-by-Step Through get_next_line(int fd)
+
+1. Initial Checks
+
+if (fd < 0 || BUFFER_SIZE <= 0)
+    return (NULL);
+
+    If the file descriptor is invalid or BUFFER_SIZE is not correctly set, return NULL immediately.
+
+2. Calling read_and_accumulate
+
+content_store = read_and_accumulate(fd, &content_store);
+if (!content_store)
+    return (NULL);
+
+    This function ensures that content_store contains at least one full line if it can be read from fd. If there's an error (like read returns -1 or memory allocation fails), it returns NULL.
+
+3. Extracting a Line
+
+line = extract_line(content_store);
+if (!line)
+{
+    free(content_store);
+    content_store = NULL;
+    return (NULL);
+}
+
+    extract_line pulls the first complete line from content_store.
+    If no line can be extracted (which can happen if content_store is empty or an allocation fails), free content_store and return NULL.
+
+4. Updating Remainder
+
+content_store = extract_remainder(content_store);
+return (line);
+
+    extract_remainder removes the line we just extracted from content_store, leaving only what's left after the newline.
+    Then line is returned.
+
+Inside read_and_accumulate(int fd, char **content)
+
+Goal:
+
+    Read from fd and add new data to *content until either a newline is found or no more data can be read.
+
+Step-by-Step:
+
+    Initialize *content if NULL
+
+if (!*content)
+    *content = ft_strdup("");
+
+    If there’s no stored content yet, create an empty string.
+
+Allocate a Temporary Buffer
+
+chunk = malloc((BUFFER_SIZE + 1) * sizeof(char));
+if (!chunk)
+    return (free(*content), NULL);
+
+    chunk will be used to store what is read from the file before concatenating it to *content.
+
+Reading in a Loop
+
+bytes_read = 1;
+while (!ft_strchr(*content, '\n') && bytes_read > 0)
+{
+    bytes_read = read(fd, chunk, BUFFER_SIZE);
+    if (bytes_read == -1)
+        return (free(chunk), free(*content), NULL);
+    
+    chunk[bytes_read] = '\0';
+    *content = ft_strjoin(*content, chunk);
+    if (!*content)
+        return (free(chunk), NULL);
+}
+
+    While no newline is found in *content and bytes_read is positive, keep reading.
+    read attempts to fill chunk with BUFFER_SIZE characters. On success, bytes_read is the count of characters read.
+    If read returns -1, there was an error. Free memory and return NULL.
+    Add a '\0' terminator to chunk.
+    Use ft_strjoin to append the contents of chunk to *content. This may reallocate memory and free the old content.
+    If ft_strjoin fails, free memory and return NULL.
+    If a newline '\n' is found or bytes_read becomes 0 (end-of-file), stop reading.
+
+Finalize and Return
+
+    return (free(chunk), *content);
+
+        Free the temporary buffer chunk.
+        Return *content which now contains up to the first full line (or all remaining data at EOF).
+
+Inside extract_line(char *content)
+
+Goal:
+
+    Given a string content that may contain multiple lines, extract the first line (ending with '\n' if it exists).
+
+Step-by-Step:
+
+    Find the End of the First Line
+
+i = 0;
+while (content && content[i] && content[i] != '\n')
+    i++;
+
+    Move through content until we find a newline or reach the end.
+
+Allocate Memory for line
+
+line = malloc(sizeof(char) * (i + 2));
+if (!line)
+    return (NULL);
+
+    We allocate enough space for all characters up to the newline and one extra for '\n' if it exists plus the '\0' terminator.
+    Note: If we stopped on a newline, i is at the newline’s position. i + 2 accounts for the newline plus '\0'.
+
+Copy Characters into line
+
+    i = 0;
+    while (content && content[i] && content[i] != '\n')
+    {
+        line[i] = content[i];
+        i++;
+    }
+    if (content[i] == '\n')
+        line[i++] = '\n';
+    line[i] = '\0';
+
+        Copy characters until we hit the newline or end of string.
+        If a newline is found, include it in line.
+        Terminate line with '\0'.
+
+    Return line
+        line now contains the complete first line, ready to be returned.
+
+Inside extract_remainder(char *buffer)
+
+Goal:
+
+    After extracting a line, remove it from buffer so that buffer only holds the rest of the text after the newline.
+
+Step-by-Step:
+
+    Find the Start of the Next Line
+
+i = 0;
+while (buffer[i] && buffer[i] != '\n')
+    i++;
+if (!buffer[i])
+    return (free(buffer), NULL);
+
+    Iterate until we find the newline character.
+    If we don’t find a newline, it means we had no extra line. We can free buffer and return NULL as there's no remainder.
+
+Allocate New Buffer for the Remainder
+
+remainder = malloc(sizeof(char) * (ft_strlen(buffer) - i + 1));
+if (!remainder)
+    return (free(buffer), NULL);
+
+    Allocate space for everything after the newline, plus a '\0'.
+
+Copy the Remainder
+
+    i++;
+    j = 0;
+    while (buffer[i])
+        remainder[j++] = buffer[i++];
+    remainder[j] = '\0';
+    free(buffer);
+    return (remainder);
+
+        Skip the newline character by incrementing i once more.
+        Copy the rest of the old buffer into remainder.
+        Free the old buffer.
+        Return remainder, which will become the new content_store in get_next_line.
+
+Putting It All Together
+
+    Each call to get_next_line(fd) tries to make sure content_store has at least one full line.
+    read_and_accumulate reads more data from fd if no newline is found.
+    When a newline is found (or EOF is reached), extract_line gets the next line, and extract_remainder updates content_store so that next time get_next_line is called, it starts from where it left off.
+    If any error or end condition is met, the function returns NULL.
+
+This logic ensures that subsequent calls to get_next_line from the same fd will continue returning lines sequentially until there are no more lines to read (EOF
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/get_next_line-subject.md`:
+
+```````md
+# Get Next Line
+
+## Leer una línea de un fd es demasiado aburrido
+
+_Resumen: El objetivo de este proyecto es simple: programar una función que devuelva
+una línea leída de un file descriptor._
+
+```
+Versión: 12
+```
+
+## Índice general
+
+- I. Objetivos
+- II. Instrucciones generales
+- III. Parte obligatoria
+- IV. Parte bonus
+- V. Entrega y evaluación
+
+
+# Capítulo I Objetivos
+
+Este proyecto no solo te permitirá añadir una función bastante práctica a tu colección;
+también te hará aprender el increíble concepto de las variables estáticas enC.
+
+
+# Capítulo II Instrucciones generales
+
+- Tu proyecto deberá estar escrito en C.
+- Tu proyecto debe estar escrito siguiendo la Norma. Si tienes archivos o funciones
+    adicionales, estas están incluidas en la verificación de la Norma y tendrás un 0 si
+    hay algún error de norma en cualquiera de ellos.
+- Tus funciones no deben terminar de forma inesperada (segfault, bus error, double
+    free, etc) excepto en el caso de comportamientos indefinidos. Si esto sucede, tu
+    proyecto será considerado no funcional y recibirás un 0 durante la evaluación.
+- Toda la memoria asignada en el heap deberá liberarse adecuadamente cuando sea
+    necesario. No se permitirán leaks de memoria.
+- Si el enunciado lo requiere, deberás entregar unMakefileque compilará tus archivos
+    fuente al output requerido con las flags-Wall, -Werrory -Wextra, utilizar cc y
+    por supuesto tuMakefileno debe hacer relink.
+- TuMakefiledebe contener al menos las normas$(NAME),all,clean,fcleany
+    re.
+- Para entregar los bonus de tu proyecto deberás incluir una regla bonus en tu
+    Makefile, en la que añadirás todos los headers, librerías o funciones que estén
+    prohibidas en la parte principal del proyecto. Los bonus deben estar en archivos
+    distintos_bonus.{c/h}. La parte obligatoria y los bonus se evalúan por separado.
+- Si tu proyecto permite el uso de lalibft, deberás copiar su fuente y susMakefile
+    asociados en un directoriolibftcon su correspondienteMakefile. ElMakefile
+    de tu proyecto debe compilar primero la librería utilizando suMakefile, y después
+    compilar el proyecto.
+- Te recomendamos crear programas de prueba para tu proyecto, aunque este trabajo
+    **no será entregado ni evaluado**. Te dará la oportunidad de verificar que tu
+    programa funciona correctamente durante tu evaluación y la de otros compañeros.
+    Y sí, tienes permitido utilizar estas pruebas durante tu evaluación o la de otros
+    compañeros.
+- Entrega tu trabajo en tu repositorioGitasignado. Solo el trabajo de tu repositorio
+    Gitserá evaluado. Si Deepthought evalúa tu trabajo, lo hará después de tus com-
+
+
+Get Next Line Leer una línea de un fd es demasiado aburrido
+
+```
+pañeros. Si se encuentra un error durante la evaluación de Deepthought, esta habrá
+terminado.
+```
+
+# Capítulo III Parte obligatoria
+
+```
+Nombre de función: get_next_line
+```
+
+```
+Prototipo: char *get_next_line(int fd);
+```
+
+```
+Archivos a entregar get_next_line.c, get_next_line_utils.c, get_next_line.h
+```
+
+```
+Parámetros fd: File descriptor del que leer
+Valor devuelto Si todo va bien: la línea leída
+En caso de fallo o si la lectura termina: NULL
+```
+
+```
+Funciones autorizadas read, malloc, free
+```
+
+```
+Descripción Escribe una función que devuelva la línea leída de
+un file descriptor
+```
+- Llamar a tu funciónget_next_linede manera repetida (por ejemplo, usando un
+    bucle) te permitirá leer el contenido del archivo hacia el que apunta el file descriptor,
+    **línea a línea** , hasta el final.
+- Tu función deberá devolver la línea que se acaba de leer.
+    Si no hay nada más que leer o si ha ocurrido un error, deberá devolverNULL.
+- Asegúrate de que tu función se comporta adecuadamente cuando lea de un archivo
+    y cuando lea de stdin.
+- Ten en cuenta que la línea devuelta debe terminar con el caracter
+    n, excepto si se ha llegado al final del archivo y esté no termina con un caracter
+    n.
+- En el headerget_next_line.hdeberás tener como mínimo el prototipo de la fun-
+    ciónget_next_line.
+- Añade todas las funciones de ayuda que necesites en el archivoget_next_line_utils.c
+
+
+Get Next Line Leer una línea de un fd es demasiado aburrido
+
+```
+Un buen comienzo sería saber qué es una variable estatica.
+```
+
+Get Next Line Leer una línea de un fd es demasiado aburrido
+
+- Tu programa debe compilar con el flag-D BUFFER_SIZE=xx. Este flag se utilizará
+    para determinar el tamaño del buffer de las lecturas de tuget_next_line(). Este
+    parámetro será modificado por tus evaluadores y por Moulinette para probar tu
+    programa.
+
+```
+Debemos ser capaces de compilar este proyecto con y sin el flag -D
+BUFFER_SIZE, junto a los flags habituales. Puedes elegir el valor por
+defecto que prefieras.
+```
+- El programa se compilará de la siguiente forma (se utiliza como ejemplo un tamaño
+    de buffer de 42):
+    cc -Wall -Werror -Wextra -D BUFFER_SIZE=42 <archivos>.c.
+- Se considera queget_next_line()tiene un comportamiento indeterminado si el
+    archivo al que apunta el fd ha cambiado desde la última vez que se llamó, siempre
+    queread()no haya llegado al final del archivo.
+- Se considera queget_next_line()tiene un comportamiento indeterminado cuando
+    lo que se lee es un archivo binario. Sin embargo, puedes implementar alguna manera
+    lógica de sortear este problema, si quieres.
+
+```
+¿Funciona correctamente tu get_next_line si el BUFFER_SIZE es 9999?
+¿Y si es 1? ¿Qué tal con 10000000? ¿Sabes por qué?
+```
+```
+Intenta leer lo menos posible cada vez que se llame a
+get_next_line(). Si encuentras un salto de línea, deberás devolver la
+línea actual. No leas el archivo entero y luego proceses cada línea.
+```
+```
+Prohibido
+```
+- No se permite la utilización de tulibften este proyecto.
+- Se prohibe la utilización delseek
+- Se prohibe la utilización de variables globales.
+
+
+# Capítulo IV Parte bonus
+
+Este proyecto es bastante directo y no deja mucho margen a los bonus. Sin embargo,
+confiamos en tu creatividad. Si has completado la parte obligatoria, inténtalo con estos
+bonus.
+
+```
+Aquí tienes los requisitos de la parte bonus:
+```
+- Desarrollaget_next_line()con una sola variable estática.
+- Tuget_next_linetiene que ser capaz de gestionar múltiples fd a la vez. Es decir,
+    si tienes tres fd disponibles para lectura (por ejemplo: 3, 4 y 5), debes poder utilizar
+    get_next_lineuna vez sobre el fd 3, otra vez sobre el fd 4, y otra vez sobre el fd
+    5 de forma alterna. Y sí, no debe perder el hilo de lectura de cada uno de los fd.
+
+Añade el sufijo_bonus.[c\h]a los archivos de esta parte bonus. Esto quiere decir
+que además de los archivos de la parte obligatoria, tienes que entregar los tres archivos
+siguientes:
+
+- get_next_line_bonus.c
+- get_next_line_bonus.h
+- get_next_line_utils_bonus.c
+
+```
+La parte bonus solo será evaluada si la parte obligatoria está
+PERFECTA. Perfecta significa que se ha completado en su totalidad
+y funciona perfectamente, sin ningún fallo. Si no has completado
+TODOS los requisitos de la parte obligatoria, tu parte bonus no será
+evaluada de ninguna manera.
+```
+
+# Capítulo V Entrega y evaluación
+
+Entrega tus ejercicios el tu directorioGit, como haces habitualmente. Solo se evaluará
+el trabajo que haya dentro de tu repositorio. Comprueba varias veces que el nombre de
+tus archivos es el correcto.
+
+```
+Cuando hagas los ejercicios, recuerda:
+1) Tanto el tamaño del buffer como el de la línea pueden tener
+valores muy diferentes.
+2) Un fd no solo apunta a archivos normales.
+Sé inteligente y compara y verifica tus ejercicios con tus
+compañeros. Prepara una batería de pruebas de cara a la evaluación.
+```
+```
+Una vez superado, no dudes en añadir tuget_next_line()a tulift.
+```
+```
+/= ∂ /\/\[](_)§ /\/\@|V †|-|@ ̄| ̄ /-/!570®1<|-\£1_`/¢@/\/\ ε vv!7}{ ???
+```
+
+
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/get_next_line_bonus.h`:
+
+```````h
+#ifndef GET_NEXT_LINE_BONUS_H
+# define GET_NEXT_LINE_BONUS_H
+
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE 42
+# endif
+
+# include <unistd.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <fcntl.h>
+# include <stdint.h>
+# include <limits.h>
+
+char	*ft_strdup(const char *s);
+char	*get_next_line(int fd);
+char	*ft_strchr(const char *s, int c);
+char	*ft_strjoin(char *s1, char *s2);
+
+size_t	ft_strlen(const char *s);
+
+#endif
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/get_next_line_utils_bonus.c`:
+
+```````c
+#include "get_next_line_bonus.h"
+
+char	*ft_strchr(const char *s, int c)
+{
+	int	i;
+
+	i = 0;
+	while (s[i])
+	{
+		if (s[i] == (unsigned char) c)
+			return ((char *)&s[i]);
+		i++;
+	}
+	if ((unsigned char) c == '\0')
+		return ((char *)&s[i]);
+	return (0);
+}
+
+char	*ft_strjoin(char *s1, char *s2)
+{
+	char	*str;
+	int		i;
+	int		j;
+
+	if (s1 == NULL && s2 == NULL)
+		return (free(s1), NULL);
+	i = 0;
+	j = 0;
+	str = (char *)malloc((ft_strlen(s1) + ft_strlen(s2) + 1)
+			* sizeof(char));
+	if (str == NULL)
+		return (free(s1), NULL);
+	while (s1 != NULL && s1[i] != '\0')
+	{
+		str[i] = s1[i];
+		i++;
+	}
+	while (s2 != NULL && s2[j] != '\0')
+	{
+		str[i + j] = s2[j];
+		j++;
+	}
+	str[i + j] = '\0';
+	free(s1);
+	return (str);
+}
+
+size_t	ft_strlen(const char *s)
+{
+	size_t	i;
+
+	i = 0;
+	while (s[i] != '\0')
+		i++;
+	return (i);
+}
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/get_next_line.h`:
+
+```````h
+#ifndef GET_NEXT_LINE_H
+# define GET_NEXT_LINE_H
+
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE 42
+# endif
+
+# include <unistd.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <fcntl.h>
+# include <stdint.h>
+# include <limits.h>
+
+char	*get_next_line(int fd);
+char	*ft_strchr(const char *s, int c);
+char	*ft_strjoin(char *s1, char *s2);
+char	*ft_strdup(const char *s);
+
+size_t	ft_strlen(const char *s);
+
+#endif
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/get_next_line.c`:
+
+```````c
+#include "get_next_line.h"
+
+static char	*extract_remainder(char *buffer)
+{
+	int		i;
+	int		j;
+	char	*remainder;
+
+	i = 0;
+	while (buffer[i] && buffer[i] != '\n')
+		i++;
+	if (!buffer[i])
+		return (free(buffer), NULL);
+	remainder = malloc(sizeof(char) * (ft_strlen(buffer) - i + 1));
+	if (!remainder)
+		return (free(buffer), NULL);
+	j = 0;
+	i++;
+	while (buffer[i])
+		remainder[j++] = buffer[i++];
+	remainder[j] = '\0';
+	free(buffer);
+	return (remainder);
+}
+
+static char	*extract_line(char *content)
+{
+	int		i;
+	char	*line;
+
+	i = 0;
+	if (!content[i])
+		return (NULL);
+	while (content && content[i] && content[i] != '\n')
+		i++;
+	line = malloc(sizeof(char) * (i + 2));
+	if (!line)
+		return (NULL);
+	i = 0;
+	while (content && content[i] && content[i] != '\n')
+	{
+		line[i] = content[i];
+		i++;
+	}
+	if (content[i] == '\n')
+		line[i++] = '\n';
+	line[i] = '\0';
+	return (line);
+}
+
+static char	*read_and_accumulate(int fd, char **content)
+{
+	char	*chunk;
+	int		bytes_read;
+
+	// if content is NULL, initialize it as an empty string
+	if (!*content)
+		*content = (char *) ft_strdup("");
+	if (!*content)
+		return (NULL);
+	chunk = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!chunk)
+		return (free(*content), NULL);
+	bytes_read = 1;
+	while (!ft_strchr(*content, '\n') && bytes_read > 0)
+	{
+		bytes_read = read(fd, chunk, BUFFER_SIZE);
+		if (bytes_read == -1)
+			return (free(chunk), free(*content), NULL); //TODO why the free content ???
+		chunk[bytes_read] = '\0';
+		*content = ft_strjoin(*content, chunk);
+		if (!*content)
+			return (free(chunk), NULL);
+	}
+	return (free(chunk), *content);
+}
+
+char	*get_next_line(int fd)
+{
+	static char	*content_store;
+	char		*line;
+
+	if (fd < 0 || BUFFER_SIZE <= 0)
+		return (NULL);
+	content_store = read_and_accumulate(fd, &content_store);
+	if (!content_store)
+		return (NULL);
+	line = extract_line(content_store);
+	if (!line)
+	{
+		free(content_store);
+		content_store = NULL;
+		return (NULL);
+	}
+	content_store = extract_remainder(content_store);
+	return (line);
+}
+
+/*int main()
+{
+	//Simple main
+	
+	int	fd;
+	char	*line;
+
+	fd = open("t1", O_RDONLY);
+	while ((line = get_next_line(1)) != NULL)
+	{
+		printf("%s", line);
+		free(line);
+	}
+	printf("%s", line);
+	close(fd);
+	return (0);
+}*/
+
+/*int	main(int argc, char *argv[])
+{
+	char *buffer;
+
+	// Read from file if an argument is provided on the command line
+	if (argc == 2)
+	{
+		// Open the file for reading
+		int fd = open(argv[1], O_RDONLY);
+		if (fd == -1)
+		{
+			perror("Error opening file");
+			exit(EXIT_FAILURE);
+		}
+
+		// Calling the function to read the file contents
+		while ((buffer = get_next_line(fd)) != NULL)
+		{
+			// Check if memory was allocated correctly
+			if (buffer == NULL)
+			{
+				fprintf(stderr, "Failure to allocate buffer memory\n");
+				break;
+			}
+
+			// Process the line read
+			printf("RECEIVED: %s\n", buffer);
+
+			// Release memory allocated to the line
+			free(buffer);
+		}
+
+		// Close file descriptor
+		if (close(fd) == -1)
+		{
+			perror("Error closing file");
+			exit(EXIT_FAILURE);
+		}
+	}
+	// Read from stdin if no arguments are provided on the command line
+	else if (argc == 1)
+	{
+		printf("Enter text from stdin:\n");
+		while ((buffer = get_next_line(STDIN_FILENO)) != NULL)
+		{
+			// Check if memory was allocated correctly
+			if (buffer == NULL)
+			{
+				fprintf(stderr, "Failure to allocate buffer memory\n");
+				break;
+			}
+
+			// Process the line read
+			printf("RECEIVED: %s\n", buffer);
+
+			// Release memory allocated to the line
+			free(buffer);
+		}
+	}
+	else
+	{
+		fprintf(stderr, "Uso: %s [nombre_del_archivo]\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	return 0;
+}*/
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/test1.txt`:
+
+```````txt
+Hello
+
+```````
+
+`/home/mateo/Nextcloud/workspace/42/exercises/GNL/get_next_line/main.c`:
+
+```````c
+#include <string.h>
+#include "get_next_line.h"
+
+int main(void)
+{
+	int fd;
+	char *line;
+
+	// Test reading from a file
+	fd = open("test-no-exist.txt", O_RDONLY);
+	if (fd == -1)
+	{
+		perror("Error opening test-no-exist file");
+		return 1;
+	}
+
+	fd = open("test.txt", O_RDONLY);
+	printf("Reading from file:\n");
+	while ((line = get_next_line(fd)) != NULL)
+	{
+		printf("%s", line);
+		free(line);
+	}
+	close(fd);
+
+	// Test reading from standard input
+	/* printf("\nReading from standard input (type 'quit' to exit):\n"); */
+	/* while ((line = get_next_line(0)) != NULL) */
+	/* { */
+	/* 	printf("Line read: %s", line); */
+	/* 	if (strcmp(line, "quit\n") == 0) */
+	/* 	{ */
+	/* 		free(line); */
+	/* 		break; */
+	/* 	} */
+	/* 	free(line); */
+	/* } */
+
+	return 0;
+}
+
+```````
